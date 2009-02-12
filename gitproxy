@@ -1,0 +1,4 @@
+#!/bin/bash
+# A git-compatible shell script for using a SOCKS proxy.
+
+exec connect -S localhost:1080 $1 $2
