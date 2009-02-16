@@ -249,12 +249,6 @@
 #define ECONNRESET WSAECONNRESET
 #endif /* _WI32 */
 
-
-
-#ifndef LINT
-static char *vcid = "$Id: connect.c 100 2007-07-03 10:48:26Z gotoh $";
-#endif
-
 /* Microsoft Visual C/C++ has _snprintf() and _vsnprintf() */
 #ifdef _MSC_VER
 #define snprintf _snprintf
@@ -545,7 +539,7 @@ char *
 expand_host_and_port (const char *fmt, const char *host, int port)
 {
     const char *src;
-    char *buf, *dst, *ptr;
+    char *buf, *dst;
     size_t len = strlen(fmt) + strlen(host) + 20;
     buf = xmalloc (len);
     dst = buf;
@@ -1028,7 +1022,7 @@ is_direct_address (const struct in_addr addr)
     ends_with("foo.beebar.com", "bar.com") => 0 (partial match)
     ends_with("bar", "bar.com")            => 0 (shorter)
  */
-domain_match(const char *s1, const char *s2)
+int domain_match(const char *s1, const char *s2)
 {
     int len1, len2;
     const char *tail1, *tail2;
@@ -1069,9 +1063,8 @@ is_direct_name (const char *name)
         return 0;                               /* false */
     tail = &name[len];
     for (i=0; i<n_direct_addr_list; i++ ) {
-        int dlen, neg;
+        int neg;
         const char *dname;
-        const char *n, *d;
         dname = direct_addr_list[i].name;
         if (dname == NULL)
             continue;                           /* it's addr/mask entry */
@@ -1118,8 +1111,15 @@ check_direct(const char *host)
 int intr_flag = 0;
 
 #ifndef _WIN32
+
+#ifdef __GNUC__
+#define UNUSED __attribute__((unused))
+#else
+#define UNUSED
+#endif
+
 void
-intr_handler(int sig)
+intr_handler(UNUSED int sig)
 {
     intr_flag = 1;
 }
@@ -1469,7 +1469,6 @@ void
 make_revstr(void)
 {
     char *ptr;
-    size_t len;
     ptr = strstr(rcs_revstr, ": ");
     if (!ptr) {
         revstr = strdup("unknown");
@@ -2007,8 +2006,8 @@ readpass( const char* prompt, ...)
 static int
 socks5_do_auth_userpass( int s )
 {
-    unsigned char buf[1024], *ptr;
-    char *pass = NULL;
+    char buf[1024];
+    char *pass = NULL, *ptr = NULL;
     int len;
 
     /* do User/Password authentication. */
