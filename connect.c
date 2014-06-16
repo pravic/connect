@@ -276,10 +276,74 @@ static char *usage = "usage: %s [-dnhst45] [-p local-port]"
 /* help message for UNIX */
 "[-R resolve] [-w timeout] \n"
 #endif /* not _WIN32 */
-"          [-H proxy-server[:port]] [-S [user@]socks-server[:port]] \n"
+"          [-H proxy-server[:port]]\n"
+"          [-S [user@]socks-server[:port]]\n"
 "          [-T proxy-server[:port]]\n"
 "          [-c telnet-proxy-command]\n"
 "          host port\n";
+
+static const char* usage_help = ""
+" \"host\" and \"port\" is for the target hostname and port-number to\n"
+" connect to.\n"
+"\n"
+" The -H option specifys a hostname and port number of the http proxy\n"
+" server to relay. If port is omitted, 80 is used. You can specify this\n"
+" value in the environment variable HTTP_PROXY and pass the -h option\n"
+" to use it.\n"
+"\n"
+" The -S option specifys the hostname and port number of the SOCKS\n"
+" server to relay.  Like -H, port number can be omitted and the default\n"
+" is 1080. You can also specify this value pair in the environment\n"
+" variable SOCKS5_SERVER and give the -s option to use it.\n"
+"\n"
+" The '-4' and the '-5' options are for specifying SOCKS relaying and\n"
+" indicates protocol version to use. It is valid only when used with\n"
+" '-s' or '-S'. Default is '-5' (protocol version 5)\n"
+"\n"
+" The '-R' option is for specifying method to resolve the\n"
+" hostname. Three keywords (\"local\", \"remote\", \"both\") or dot-notation\n"
+" IP address are acceptable.  The keyword \"both\" means, \"Try local\n"
+" first, then remote\". If a dot-notation IP address is specified, use\n"
+" this host as nameserver. The default is \"remote\" for SOCKS5 or\n"
+" \"local\" for others. On SOCKS4 protocol, remote resolving method\n"
+" (\"remote\" and \"both\") requires protocol 4a supported server.\n"
+"\n"
+" The '-p' option will forward a local TCP port instead of using the\n"
+" standard input and output.\n"
+"\n"
+" The '-P' option is same to '-p' except keep remote session. The\n"
+" program repeats waiting the port with holding remote session without\n"
+" disconnecting. To disconnect the remote session, send EOF to stdin or\n"
+" kill the program.\n"
+"\n"
+" The '-w' option specifys timeout seconds for making connection with\n"
+" TARGET host.\n"
+"\n"
+" The '-d' option is used for debug. If you fail to connect, use this\n"
+" and check request to and response from server.\n"
+"\n"
+" You can omit the \"port\" argument when program name is special format\n"
+" containing port number itself. For example,\n"
+"   $ ln -s connect connect-25\n"
+" means this connect-25 command is spcifying port number 25 already\n"
+" so you need not 2nd argument (and ignored if specified).\n"
+"\n"
+" To use proxy, this example is for SOCKS5 connection to connect to\n"
+" 'host' at port 25 via SOCKS5 server on 'firewall' host.\n"
+"   $ connect -S firewall  host 25\n"
+" or\n"
+"   $ SOCKS5_SERVER=firewall; export SOCKS5_SERVER\n"
+"   $ connect -s host 25\n"
+"\n"
+" For a HTTP-PROXY connection:\n"
+"   $ connect -H proxy-server:8080  host 25\n"
+" or\n"
+"   $ HTTP_PROXY=proxy-server:8080; export HTTP_PROXY\n"
+"   $ connect -h host 25\n"
+" To forward a local port, for example to use ssh:\n"
+"   $ connect -p 5550 -H proxy-server:8080  host 22\n"
+"  ($ ssh -l user -p 5550 localhost )\n"
+;
 
 /* name of this program */
 char *progname = NULL;
@@ -1490,6 +1554,18 @@ getarg( int argc, char **argv )
 
     progname = *argv;
     argc--, argv++;
+
+	if(argc > 0 && stricmp(argv[0], "--version") == 0) {
+    fprintf(stderr, "%s\nVersion %s\n", progdesc, revstr);
+    exit(0);
+  }
+	if(argc > 0 && stricmp(argv[0], "--help") == 0) {
+    fprintf(stderr, "%s\nVersion %s\n", progdesc, revstr);
+    fprintf(stderr, usage, progname);
+    fprintf(stderr, usage_help, progname);
+    exit(0);
+  }
+
 
     /* check optinos */
     while ( (0 < argc) && (**argv == '-') ) {
